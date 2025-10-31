@@ -1,82 +1,55 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, User, MapPin, DollarSign, Plus } from "lucide-react";
+import { Calendar, User, MapPin, DollarSign, Plus, Car, UserCheck } from "lucide-react";
+import { bookingsData } from "@/data/bookings";
+import { useState } from "react";
 
-interface Booking {
-  id: string;
-  customer: string;
-  tour: string;
-  date: string;
-  travelers: number;
-  amount: string;
-  paid: string;
-  status: "confirmed" | "pending" | "cancelled" | "completed";
-}
+type BookingStatus = "confirmed" | "pending" | "cancelled" | "completed";
 
-const mockBookings: Booking[] = [
-  {
-    id: "BK-2025-001",
-    customer: "Sarah Johnson",
-    tour: "Bali Paradise - 7 Days",
-    date: "Nov 15, 2025",
-    travelers: 2,
-    amount: "$4,500",
-    paid: "$4,500",
-    status: "confirmed",
-  },
-  {
-    id: "BK-2025-002",
-    customer: "Michael Chen",
-    tour: "European Adventure - 14 Days",
-    date: "Nov 22, 2025",
-    travelers: 4,
-    amount: "$12,000",
-    paid: "$6,000",
-    status: "pending",
-  },
-  {
-    id: "BK-2025-003",
-    customer: "Emma Wilson",
-    tour: "Dubai Luxury - 5 Days",
-    date: "Dec 1, 2025",
-    travelers: 2,
-    amount: "$5,400",
-    paid: "$5,400",
-    status: "confirmed",
-  },
-  {
-    id: "BK-2025-004",
-    customer: "David Rodriguez",
-    tour: "Japan Cultural - 10 Days",
-    date: "Dec 8, 2025",
-    travelers: 3,
-    amount: "$9,600",
-    paid: "$3,200",
-    status: "pending",
-  },
-];
+const formatCurrency = (amount: number) => `€${amount.toLocaleString()}`;
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 export const Bookings = () => {
-  const getStatusBadge = (status: Booking["status"]) => {
-    switch (status) {
-      case "confirmed":
-        return <Badge variant="success">Confirmed</Badge>;
-      case "pending":
-        return <Badge variant="warning">Pending</Badge>;
-      case "cancelled":
-        return <Badge variant="destructive">Cancelled</Badge>;
-      case "completed":
-        return <Badge variant="info">Completed</Badge>;
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterPlatform, setFilterPlatform] = useState<string>("all");
+
+  const getStatusBadge = (remaining: number, daysUntilTravel: number): JSX.Element => {
+    if (remaining === 0) {
+      return <Badge variant="success">Fully Paid</Badge>;
+    } else if (daysUntilTravel <= 30 && remaining > 0) {
+      return <Badge variant="destructive">Payment Due</Badge>;
+    } else if (remaining > 0) {
+      return <Badge variant="warning">Partial Payment</Badge>;
     }
+    return <Badge variant="info">Pending</Badge>;
   };
+
+  const getTypeLabel = (type: string) => {
+    return type === "Private" ? "Private" : "Group";
+  };
+
+  const filteredBookings = bookingsData.filter(booking => {
+    const typeMatch = filterType === "all" || 
+      (filterType === "private" && booking.typeOfTour === "Private") ||
+      (filterType === "group" && booking.typeOfTour === "Group Departure");
+    const platformMatch = filterPlatform === "all" || booking.platform.toLowerCase() === filterPlatform.toLowerCase();
+    return typeMatch && platformMatch;
+  });
+
+  const totalRevenue = filteredBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  const totalDeposited = filteredBookings.reduce((sum, b) => sum + b.deposit, 0);
+  const totalRemaining = filteredBookings.reduce((sum, b) => sum + b.remaining, 0);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Bookings</h1>
-          <p className="text-muted-foreground">Track and manage tour bookings</p>
+          <p className="text-muted-foreground">Track and manage tour bookings - {filteredBookings.length} bookings</p>
         </div>
         <Button variant="accent">
           <Plus className="h-4 w-4" />
@@ -84,41 +57,147 @@ export const Bookings = () => {
         </Button>
       </div>
 
-      <div className="grid gap-6">
-        {mockBookings.map((booking) => (
-          <Card key={booking.id} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
+          <p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-muted-foreground mb-1">Deposited</p>
+          <p className="text-2xl font-bold text-[hsl(var(--success))]">{formatCurrency(totalDeposited)}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-sm text-muted-foreground mb-1">Remaining</p>
+          <p className="text-2xl font-bold text-[hsl(var(--warning))]">{formatCurrency(totalRemaining)}</p>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex gap-2">
+            <Button 
+              variant={filterType === "all" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterType("all")}
+            >
+              All Types
+            </Button>
+            <Button 
+              variant={filterType === "private" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterType("private")}
+            >
+              Private
+            </Button>
+            <Button 
+              variant={filterType === "group" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterType("group")}
+            >
+              Group
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant={filterPlatform === "all" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterPlatform("all")}
+            >
+              All Platforms
+            </Button>
+            <Button 
+              variant={filterPlatform === "website" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterPlatform("website")}
+            >
+              Website
+            </Button>
+            <Button 
+              variant={filterPlatform === "tourradar" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterPlatform("tourradar")}
+            >
+              Tourradar
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Bookings List */}
+      <div className="grid gap-4">
+        {filteredBookings.map((booking, index) => (
+          <Card key={`${booking.id}-${index}`} className="p-6 hover:shadow-lg transition-shadow">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
               <div className="flex-1 space-y-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold">{booking.tour}</h3>
-                      {getStatusBadge(booking.status)}
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <h3 className="text-lg font-semibold">{booking.tourName}</h3>
+                      {getStatusBadge(booking.remaining, booking.daysUntilTravel)}
+                      <Badge variant={booking.typeOfTour === "Private" ? "default" : "secondary"}>
+                        {getTypeLabel(booking.typeOfTour)}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">Booking ID: {booking.id}</p>
+                    <p className="text-sm text-muted-foreground">Tour #{booking.id} • {booking.platform}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold">{formatCurrency(booking.totalPrice)}</p>
+                    {booking.remaining > 0 && (
+                      <p className="text-sm text-[hsl(var(--warning))]">
+                        {formatCurrency(booking.remaining)} due
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{booking.customer}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{booking.fullName}</p>
+                      <p className="text-xs text-muted-foreground">{booking.participants} travelers</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{booking.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{booking.travelers} travelers</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{formatDate(booking.startDate)}</p>
+                      <p className="text-xs text-muted-foreground">{booking.numberOfDays} days • {booking.daysUntilTravel}d until travel</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      Paid: {booking.paid} / {booking.amount}
-                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Paid: {formatCurrency(booking.deposit)}</p>
+                      <p className="text-xs text-muted-foreground">Commission: {formatCurrency(booking.commission)}</p>
+                    </div>
                   </div>
                 </div>
+
+                {(booking.driver || booking.guide || booking.vehicle) && (
+                  <div className="flex flex-wrap gap-4 pt-2 border-t">
+                    {booking.driver && (
+                      <div className="flex items-center gap-2">
+                        <Car className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Driver: <span className="font-medium">{booking.driver}</span></span>
+                      </div>
+                    )}
+                    {booking.guide && (
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Guide: <span className="font-medium">{booking.guide}</span></span>
+                      </div>
+                    )}
+                    {booking.vehicle && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Vehicle: <span className="font-medium">{booking.vehicle}</span></span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex lg:flex-col gap-2">
