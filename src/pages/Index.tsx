@@ -1,12 +1,34 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Navbar } from "@/components/Navbar";
+import { Dashboard } from "@/components/Dashboard";
+import { Customers } from "@/components/Customers";
+import { Bookings } from "@/components/Bookings";
+import { Tours } from "@/components/Tours";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return <Dashboard />;
+      case "customers":
+        return <Customers />;
+      case "bookings":
+        return <Bookings />;
+      case "tours":
+        return <Tours />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+      <main className="container py-8">
+        {renderContent()}
+      </main>
     </div>
   );
 };
