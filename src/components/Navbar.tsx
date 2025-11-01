@@ -1,6 +1,7 @@
-import { Plane, Menu } from "lucide-react";
+import { Plane, Menu, TreeDeciduous } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   activeTab: string;
@@ -8,6 +9,7 @@ interface NavbarProps {
 }
 
 export const Navbar = ({ activeTab, onTabChange }: NavbarProps) => {
+  const navigate = useNavigate();
   const navItems = [
     { id: "dashboard", label: "Dashboard" },
     { id: "insights", label: "Insights" },
@@ -35,6 +37,14 @@ export const Navbar = ({ activeTab, onTabChange }: NavbarProps) => {
               {item.label}
             </Button>
           ))}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/olive-grove")}
+            className="flex items-center gap-2"
+          >
+            <TreeDeciduous className="w-4 h-4" />
+            Olive Grove
+          </Button>
         </div>
 
         {/* Mobile Navigation */}
@@ -56,6 +66,14 @@ export const Navbar = ({ activeTab, onTabChange }: NavbarProps) => {
                   {item.label}
                 </Button>
               ))}
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/olive-grove")}
+                className="justify-start flex items-center gap-2"
+              >
+                <TreeDeciduous className="w-4 h-4" />
+                Olive Grove
+              </Button>
             </div>
           </SheetContent>
         </Sheet>
