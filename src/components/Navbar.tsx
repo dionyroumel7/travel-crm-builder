@@ -10,6 +10,7 @@ interface NavbarProps {
 export const Navbar = ({ activeTab, onTabChange }: NavbarProps) => {
   const navItems = [
     { id: "dashboard", label: "Dashboard" },
+    { id: "insights", label: "Insights" },
     { id: "customers", label: "Customers" },
     { id: "bookings", label: "Bookings" },
     { id: "tours", label: "Tours" },

@@ -4,6 +4,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { Customers } from "@/components/Customers";
 import { Bookings } from "@/components/Bookings";
 import { Tours } from "@/components/Tours";
+import { Insights } from "@/components/Insights";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -12,6 +13,8 @@ const Index = () => {
     switch (activeTab) {
       case "dashboard":
         return <Dashboard />;
+      case "insights":
+        return <Insights />;
       case "customers":
         return <Customers />;
       case "bookings":
